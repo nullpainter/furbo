@@ -3,20 +3,16 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
-using MotorDriver.Models;
+using Microsoft.Extensions.Logging;
 
 namespace MotorDriver.Workers;
 
 /// <summary>
 ///     Polls an audio device, randomly driving the Furby's motor when audio is playing.
 /// </summary>
-public class AudioPollWorker : IHostedService
+public class AudioPollWorker(ILogger<AudioPollWorker> logger, MotorSequence sequence) : BackgroundService
 {
-    /// <summary>
-    ///     Range of motor durations.
-    /// </summary>
-    private readonly Range _durations = new(20, 100);
-
+   
     private readonly TimeSpan _pollInterval = TimeSpan.FromMilliseconds(50);
 
     /// <summary>
@@ -29,11 +25,10 @@ public class AudioPollWorker : IHostedService
     /// </summary>
     private const string RunningText = "state: RUNNING";
 
-    private MotorDriver _driver;
-
-    public async Task StartAsync(CancellationToken cancellationToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _driver = new MotorDriver();
+        logger.LogInformation("Listening...");
+        
         var timer = new PeriodicTimer(_pollInterval);
 
         try
@@ -41,37 +36,28 @@ public class AudioPollWorker : IHostedService
             do
             {
                 using var audioDeviceReader = new StreamReader(AudioDevice);
-                var contents = await audioDeviceReader.ReadLineAsync();
+                var contents = await audioDeviceReader.ReadLineAsync(stoppingToken);
 
                 // Start motor if audio is playing
                 if (contents == RunningText)
                 {
-                    _driver.Start(NewState);
+                    sequence.Start();
                     continue;
                 }
 
                 // Stop motor if no audio is playing
-                _driver.Stop();
-            } while (await timer.WaitForNextTickAsync(cancellationToken));
+                sequence.Stop();
+            } while (await timer.WaitForNextTickAsync(stoppingToken));
         }
         catch (OperationCanceledException)
         {
-            _driver.Stop();
+            sequence.Stop();
         }
     }
 
-    public Task StopAsync(CancellationToken cancellationToken)
+    public override async Task StopAsync(CancellationToken cancellationToken)
     {
-        _driver.Stop();
-        return Task.CompletedTask;
-    }
-
-    // Creates new duration and direction state for the motor driver
-    private State NewState()
-    {
-        var direction = Random.Shared.Next() % 2 == 0 ? Direction.Forward : Direction.Backward;
-        var duration = Random.Shared.Next(_durations.Start.Value, _durations.End.Value);
-
-        return new State(direction, duration);
+        await base.StopAsync(cancellationToken);
+        sequence.Stop();
     }
 }

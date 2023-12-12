@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Device.Gpio;
+using Microsoft.Extensions.Logging;
 using MotorDriver.Models;
 
 namespace MotorDriver;
 
 public class MotorDriver : IDisposable
 {
+    private readonly ILogger<MotorDriver> _logger;
     private readonly GpioController _controller;
     private long _eventCount;
 
@@ -14,8 +16,9 @@ public class MotorDriver : IDisposable
 
     private bool _running;
 
-    public MotorDriver()
+    public MotorDriver(ILogger<MotorDriver> logger)
     {
+        _logger = logger;
         _controller = new GpioController();
 
         _controller.OpenPin(GpioAssignment.Encoder, PinMode.Input);
@@ -28,7 +31,7 @@ public class MotorDriver : IDisposable
 
     private void OnPinEvent(object sender, PinValueChangedEventArgs args)
     {
-        if (_eventCount++ >= _state.Duration) ResetState();
+        if (_eventCount++ >= _state.Duration && _running) ResetState();
     }
 
     /// <summary>
@@ -38,6 +41,8 @@ public class MotorDriver : IDisposable
     {
         if (!_running) return;
         
+        _logger.LogInformation("Stopping motor");
+
         SetDirection(Direction.Stop);
         _running = false;
     }
@@ -48,6 +53,8 @@ public class MotorDriver : IDisposable
     public void Start(Func<State> stateProvider)
     {
         if (_running) return;
+        
+        _logger.LogInformation("Starting motor");
 
         _stateProvider = stateProvider;
         ResetState();
@@ -62,10 +69,12 @@ public class MotorDriver : IDisposable
     {
         _eventCount = 0;
         if (_stateProvider == null) return;
-        
+
         // Retrieve new state and set direction
         _state = _stateProvider();
         SetDirection(_state.Direction);
+        
+        _logger.LogDebug("Direction set to {Direction}", _state.Direction);
     }
 
     /// <summary>
@@ -84,7 +93,6 @@ public class MotorDriver : IDisposable
                 _controller.Write(GpioAssignment.Backwards, PinValue.High);
                 break;
             case Direction.Stop:
-            default:
                 _controller.Write(GpioAssignment.Backwards, PinValue.Low);
                 _controller.Write(GpioAssignment.Forward, PinValue.Low);
                 break;
@@ -93,9 +101,11 @@ public class MotorDriver : IDisposable
 
     public void Dispose()
     {
+        _logger.LogInformation("Disposing motor driver");
+        
         Stop();
         _controller?.Dispose();
-        
+
         GC.SuppressFinalize(this);
     }
 }

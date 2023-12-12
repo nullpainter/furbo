@@ -2,6 +2,17 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MotorDriver", "MotorDriver\MotorDriver.csproj", "{EE4766BA-7253-4A37-A14C-7FCB8C4ED463}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlexaInvoker", "AlexaInvoker\AlexaInvoker.csproj", "{8DB60AA7-D203-488D-B820-7057C3DF7019}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{8481D41E-7331-43E5-9BE3-EF448CCAE44A}"
+	ProjectSection(SolutionItems) = preProject
+		Directory.Build.props = Directory.Build.props
+		.gitignore = .gitignore
+		Directory.Packages.props = Directory.Packages.props
+		LICENSE = LICENSE
+		publish.sh = publish.sh
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +23,9 @@ Global
 		{EE4766BA-7253-4A37-A14C-7FCB8C4ED463}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EE4766BA-7253-4A37-A14C-7FCB8C4ED463}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EE4766BA-7253-4A37-A14C-7FCB8C4ED463}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8DB60AA7-D203-488D-B820-7057C3DF7019}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8DB60AA7-D203-488D-B820-7057C3DF7019}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8DB60AA7-D203-488D-B820-7057C3DF7019}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8DB60AA7-D203-488D-B820-7057C3DF7019}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
